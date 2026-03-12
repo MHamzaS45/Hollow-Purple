@@ -1,16 +1,17 @@
-<! The following is the code for this personal project. >
+<!---Code for a game where you use your hands to charge up a purple energy orb (Gojo's Hollow Purple) and then blast it at your opponent--->
 
 <!DOCTYPE html>
 <html>
 <head>
+
 <title>Gojo's Hollow Purple</title>
 
-<! libraries for mediapipe >
-<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>              
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
 
 <style>
+
 body{
 margin:0;
 overflow:hidden;
@@ -27,8 +28,8 @@ transform:scaleX(-1);
 video{
 display:none;
 }
-</style>
 
+</style>
 </head>
 
 <body>
@@ -38,49 +39,67 @@ display:none;
 
 <script>
 
-const video = document.getElementById("video");
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+let charging = false;
+let charged = false;
+let firing = false;
+let beamLength = 0;
+let purpleX = 0;
+let purpleY = 0;
+let prevZ = null;
+let pushVelocity = 0;
+const video=document.getElementById("video");
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
 
-let leftOrb = null;
-let rightOrb = null;
-let purplePower = 0;
+let leftOrb=null;
+let rightOrb=null;
+
+let purpleCharge=0;
+let explosion=0;
+
+let particles=[];
+
+const chargeSound=new Audio("sound/charge.mp3");
+const blastSound=new Audio("sound/blast.mp3");
 
 function onResults(results){
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-ctx.clearRect(0,0,canvas.width,canvas.height);
+ctx.drawImage(results.image,0,0,canvas.width,canvas.height);
 
-leftOrb = null;
-rightOrb = null;
+leftOrb=null;
+rightOrb=null;
 
 if(results.multiHandLandmarks){
 
 for(let i=0;i<results.multiHandLandmarks.length;i++){
 
-let hand = results.multiHandLandmarks[i];
-let type = results.multiHandedness[i].label;
+let lm=results.multiHandLandmarks[i];
+let type=results.multiHandedness[i].label;
 
-let finger = hand[8];
+let finger=lm[8];
 
 let x = finger.x * canvas.width;
 let y = finger.y * canvas.height;
+let z = finger.z;
+if(type==="Left") leftOrb={x,y};
+if(type==="Right") rightOrb={x,y};
+if(prevZ !== null){
 
-if(type==="Left"){
-leftOrb={x,y};
+pushVelocity = prevZ - z;
+drawPurpleBeam();
+
 }
 
-if(type==="Right"){
-rightOrb={x,y};
-}
-
+prevZ = z;
 }
 
 }
 
 drawEnergy();
+updateParticles();
 
 }
 
@@ -88,28 +107,22 @@ function drawEnergy(){
 
 if(leftOrb){
 
-ctx.beginPath();
-ctx.arc(leftOrb.x,leftOrb.y,40,0,Math.PI*2);
+drawAura(leftOrb,"blue");
+spawnParticles(leftOrb,"blue");
 
-ctx.fillStyle="rgba(0,150,255,0.8)";
-ctx.shadowColor="#00aaff";
-ctx.shadowBlur=40;
+}
 
-ctx.fill();
+function releasePurpleBeam(){
+
+if(!charged) return;
+firing = true;
+beamLength = 0;
 
 }
 
 if(rightOrb){
-
-ctx.beginPath();
-ctx.arc(rightOrb.x,rightOrb.y,40,0,Math.PI*2);
-
-ctx.fillStyle="rgba(255,60,60,0.8)";
-ctx.shadowColor="#ff0033";
-ctx.shadowBlur=40;
-
-ctx.fill();
-
+drawAura(rightOrb,"red");
+spawnParticles(rightOrb,"red");
 }
 
 if(leftOrb && rightOrb){
@@ -117,17 +130,97 @@ if(leftOrb && rightOrb){
 let dx=leftOrb.x-rightOrb.x;
 let dy=leftOrb.y-rightOrb.y;
 
-let distance=Math.sqrt(dx*dx+dy*dy);
+let dist=Math.sqrt(dx*dx+dy*dy);
 
-if(distance<120){
+if(dist<150){
 
-purplePower+=15;
+purpleCharge+=1;
+
+chargeSound.play();
 
 let cx=(leftOrb.x+rightOrb.x)/2;
 let cy=(leftOrb.y+rightOrb.y)/2;
 
+drawPurpleCharge(cx,cy);
+
+
+
+if(purpleCharge>30){
+charged = true;
+let jitter = (Math.random()-0.5)*20;
+let jitter2 = (Math.random()-0.5)*20;
+ctx.lineTo(cx + jitter, cy + jitter2);
+purpleX = cx;
+purpleY = cy;
+
+triggerExplosion(cx,cy);
+
+}
+
+}else{
+
+purpleCharge=0;
+
+}
+
+}
+
+
+
+}
+
+function drawAura(pos,color){
+let radius=40+Math.sin(Date.now()*0.01)*10;
 ctx.beginPath();
-ctx.arc(cx,cy,60,0,Math.PI*2);
+ctx.arc(pos.x,pos.y,radius,0,Math.PI*2);
+if(color==="blue"){
+ctx.fillStyle="rgba(0,150,255,0.7)";
+ctx.shadowColor="#00aaff";
+}
+
+if(color==="red"){
+ctx.fillStyle="rgba(255,60,60,0.7)";
+ctx.shadowColor="#ff0033";
+
+}
+
+ctx.shadowBlur=40;
+
+ctx.fill();
+
+}
+
+function drawPurpleBeam(){
+
+if(!firing) return;
+
+beamLength += 60;
+
+ctx.beginPath();
+ctx.moveTo(purpleX,purpleY);
+ctx.lineTo(purpleX,purpleY - beamLength);
+
+ctx.lineWidth = 40;
+ctx.strokeStyle = "rgba(200,0,255,0.9)";
+ctx.shadowColor = "#bb00ff";
+ctx.shadowBlur = 80;
+
+ctx.stroke();
+
+if(beamLength > canvas.height){
+
+resetAttack();
+
+}
+
+}
+
+function drawPurpleCharge(x,y){
+
+let r=60+purpleCharge*2;
+
+ctx.beginPath();
+ctx.arc(x,y,r,0,Math.PI*2);
 
 ctx.fillStyle="rgba(180,0,255,0.9)";
 ctx.shadowColor="#bb00ff";
@@ -135,51 +228,138 @@ ctx.shadowBlur=60;
 
 ctx.fill();
 
+}
+
+if(charged && pushVelocity > 0.15){
+
+releasePurpleBeam();
+
+}
+
+function triggerExplosion(x,y){
+
+blastSound.play();
+
+explosion=20;
+
 ctx.beginPath();
-ctx.moveTo(cx,cy);
-ctx.lineTo(cx,cy-purplePower);
+ctx.arc(x,y,120,0,Math.PI*2);
 
-ctx.lineWidth=25;
-ctx.strokeStyle="purple";
-ctx.stroke();
+ctx.fillStyle="rgba(200,0,255,0.9)";
+ctx.shadowBlur=100;
+ctx.fill();
 
-}
-
-else{
-
-purplePower=0;
+screenShake();
 
 }
 
+function spawnParticles(pos,color){
+for(let i=0;i<2;i++){
+particles.push({
+x:pos.x,
+y:pos.y,
+vx:(Math.random()-0.5)*4,
+vy:(Math.random()-0.5)*4,
+life:30,
+color:color
+
+});
+
+}
+
+}
+
+function updateParticles(){
+
+for(let i=particles.length-1;i>=0;i--){
+let p=particles[i];
+p.x+=p.vx;
+p.y+=p.vy;
+p.life--;
+ctx.beginPath();
+ctx.arc(p.x,p.y,4,0,Math.PI*2);
+
+if(p.color==="blue") ctx.fillStyle="#00aaff";
+if(p.color==="red") ctx.fillStyle="#ff0033";
+
+ctx.fill();
+
+if(p.life<=0){
+
+particles.splice(i,1);
+
+}
+
 }
 
 }
 
-const hands = new Hands({
+function screenShake(){
+
+let shake=10;
+canvas.style.transform=
+`translate(${(Math.random()-0.5)*shake}px,
+${(Math.random()-0.5)*shake}px) scaleX(-1)`;
+setTimeout(()=>{
+canvas.style.transform="scaleX(-1)";
+},100);
+
+}
+
+const hands=new Hands({
+
 locateFile:(file)=>{
+
 return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+
 }
+
 });
 
 hands.setOptions({
+
 maxNumHands:2,
 modelComplexity:1,
 minDetectionConfidence:0.5,
 minTrackingConfidence:0.5
+
 });
 
 hands.onResults(onResults);
-
-const camera = new Camera(video,{
-onFrame: async()=>{
+const camera=new Camera(video,{
+onFrame:async()=>{
 await hands.send({image:video});
+
 },
+
 width:1280,
 height:720
+
 });
 
-camera.start();
 
+window.addEventListener("keydown",function(e){
+
+if(e.code === "Space"){
+
+releasePurpleBeam();
+
+}
+
+});
+
+function resetAttack(){
+
+firing = false;
+charged = false;
+charging = false;
+purpleCharge = 0;
+beamLength = 0;
+
+}
+
+camera.start();
+console.log(pushVelocity);
 </script>
 
 </body>
