@@ -7,13 +7,14 @@
 </p>
 
 ## Tech Stack: 
-- Mediapipe
+- Mediapipe 
 - HTML, JS, CSS
 
 ### How to use it
-1. Clone the Repository 
-2. Remember to allow camera access
-3. Make sure your hands are visible on screen
-4. Bring your hands together to unleash Imaginary Technique: Hollow Purple
+1. Clone the Repository
+2. Be sure to have all the relevant libraries installed (Mediapipe)
+3. Remember to allow camera access
+4. Make sure your hands are visible on screen. (Blue will be rendered on one's right hand side, with Red being tracked on the other)
+5. Bring your hands together to merge Cursed Technique Lapse: Blue with Cursed Technique Reversal Red to unleash <b>Imaginary Technique: Hollow Purple</b>
 
 Hope you like it! :)
