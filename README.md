@@ -1,4 +1,4 @@
-# Hollow Purple - A MediaPipe Project
+# Hollow Purple - A MediaPipe Project [WIP]
 
 > Motion and Reversal. “Cursed Technique Lapse: Blue. Cursed Technique Reversal: Red. When these two collide, an imaginary mass is born… Imaginary Technique: Hollow Purple.” <br><br> <i> Gojo Satoru, Jujutsu Kaisen </i>
 
