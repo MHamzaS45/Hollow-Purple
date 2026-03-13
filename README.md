@@ -18,3 +18,10 @@
 5. Bring your hands together to merge Cursed Technique Lapse: Blue with Cursed Technique Reversal Red to unleash <b>Imaginary Technique: Hollow Purple</b>
 
 Hope you like it! :)
+
+### Roadmap
+<b>Planned Features</b>
+- Hollow Purple locked once charged
+- Shooting/release mechanism 
+
+
