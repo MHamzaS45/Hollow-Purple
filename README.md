@@ -1,5 +1,10 @@
 # Hollow Purple - A MediaPipe Creation [WIP]
 
+### Roadmap
+<b>Planned Features</b>
+- Hollow Purple locked once charged
+- Shooting/release mechanism 
+
 > Motion and Reversal. “Cursed Technique Lapse: Blue. Cursed Technique Reversal: Red. When these two collide, an imaginary mass is born… Imaginary Technique: Hollow Purple.” <br><br> <i> Gojo Satoru, Jujutsu Kaisen </i>
 
 The following is a computer vision minigame, where hand tracking technology is utilized for users to be able to recreate Satoru Gojo's Cursed Technique: Limitless moves from the hit manga 
@@ -23,9 +28,5 @@ The following is a computer vision minigame, where hand tracking technology is u
 
 Hope you like it! :)
 
-### Roadmap
-<b>Planned Features</b>
-- Hollow Purple locked once charged
-- Shooting/release mechanism 
 
 
